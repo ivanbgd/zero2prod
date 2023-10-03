@@ -3,20 +3,10 @@
 //! Run with:
 //! `cargo test --test health_check`
 
+use rstest::rstest;
 use std::net::TcpListener;
 
-// `#[tokio::test]` is the testing equivalent of `#[tokio::main]`.
-// It also saves us from having to specify the `#[test]` attribute.
-//
-// We can inspect code that gets generated using
-// `cargo expand --test health_check` (<- name of the test file).
-
-// When a tokio runtime is shut down all tasks spawned on it are dropped.
-// `tokio::test` spins up a new runtime at the beginning of each
-// test case, and they shut down at the end of each test case.
-// Hence, there is no need to implement any clean up logic to avoid leaking resources between test runs.
-
-/// Launch our application in the background
+/// Spin up an instance of our application in the background and return its address (i.e., `http:://127.0.0.1:XXXX`)
 fn spawn_app() -> String {
     let addr = "127.0.0.1";
     let addr_port = format!("{}:0", addr);
@@ -61,4 +51,77 @@ async fn health_check_works() {
     // Assert
     assert!(response.status().is_success());
     assert_eq!(Some(0), response.content_length());
+}
+
+#[tokio::test]
+async fn subscribe_returns_200_for_valid_form_data() {
+    // Arrange
+    let app_addr = spawn_app();
+    let client = reqwest::Client::new();
+
+    // Act
+    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    let response = client
+        .post(&format!("{}/subscriptions", &app_addr))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(body)
+        .send()
+        .await
+        .expect("Failed to send request to '/subscriptions'.");
+
+    // Assert
+    assert_eq!(200, response.status().as_u16());
+}
+
+#[tokio::test]
+async fn subscribe_returns_400_when_data_is_missing() {
+    // Arrange
+    let app_addr = spawn_app();
+    let client = reqwest::Client::new();
+    let test_cases = [
+        ("name=le%20guin", "missing the email"),
+        ("email=ursula_le_guin%40gmail.com", "missing the name"),
+        ("", "missing both name and email"),
+    ];
+
+    for (invalid_body, error_message) in test_cases {
+        // Act
+        let response = client
+            .post(format!("{}/subscriptions", app_addr))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(invalid_body)
+            .send()
+            .await
+            .expect("Failed to send request to '/subscriptions'.");
+
+        // Assert
+        assert_eq!(400, response.status().as_u16(),
+                   "The API did not fail with 400 Bad Request when payload was {}.", error_message);
+    }
+}
+
+#[rstest(
+invalid_body, error_message,
+case::missing_email("name=le%20guin", "missing the email"),
+case::missing_name("email=ursula_le_guin%40gmail.com", "missing the name"),
+case::missing_both_name_and_email("", "missing both name and email"),
+)]
+#[tokio::test]
+async fn subscribe_returns_400_when_data_is_missing_parameterized(invalid_body: &'static str, error_message: &str) {
+    // Arrange
+    let app_addr = spawn_app();
+    let client = reqwest::Client::new();
+
+    // Act
+    let response = client
+        .post(format!("{}/subscriptions", app_addr))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(invalid_body)
+        .send()
+        .await
+        .expect("Failed to send request to '/subscriptions'.");
+
+    // Assert
+    assert_eq!(400, response.status().as_u16(),
+               "The API did not fail with 400 Bad Request when payload was {}.", error_message);
 }
