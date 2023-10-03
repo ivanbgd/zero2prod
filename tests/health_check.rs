@@ -101,10 +101,10 @@ async fn subscribe_returns_400_when_data_is_missing() {
 }
 
 #[rstest(
-invalid_body, error_message,
-case::missing_email("name=le%20guin", "missing the email"),
-case::missing_name("email=ursula_le_guin%40gmail.com", "missing the name"),
-case::missing_both_name_and_email("", "missing both name and email"),
+    invalid_body, error_message,
+    case::missing_email("name=le%20guin", "missing the email"),
+    case::missing_name("email=ursula_le_guin%40gmail.com", "missing the name"),
+    case::missing_both_name_and_email("", "missing both name and email")
 )]
 #[tokio::test]
 async fn subscribe_returns_400_when_data_is_missing_parameterized(invalid_body: &'static str, error_message: &str) {

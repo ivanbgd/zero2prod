@@ -15,12 +15,8 @@ async fn health_check() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
-async fn subscribe(web::Form(form): web::Form<FormData>) -> HttpResponse {
-    if !form.email.is_empty() && !form.name.is_empty() {
-        HttpResponse::Ok().finish()
-    } else {
-        HttpResponse::BadRequest().finish()
-    }
+async fn subscribe(web::Form(_form): web::Form<FormData>) -> HttpResponse {
+    HttpResponse::Ok().finish()
 }
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
