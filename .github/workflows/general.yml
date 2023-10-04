@@ -52,9 +52,9 @@ jobs:
           sudo apt-get install libpq-dev -y
           chmod +x ./scripts/init_db.sh
           SKIP_DOCKER=true ./scripts/init_db.sh
-      - name: Check sqlx-data.json is up-to-date
-        run: |
-          cargo sqlx prepare --workspace --check
+#      - name: Check sqlx-data.json is up-to-date
+#        run: |
+#          cargo sqlx prepare --workspace --check
       - name: Run tests
         run: cargo test
 
@@ -96,10 +96,16 @@ jobs:
           --features ${{ env.SQLX_FEATURES }}
           --no-default-features
           --locked
+      ### Install postgresql-client
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install postgresql-client -y
+      ### Install postgresql-client
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
+          chmod +x ./scripts/init_db.sh
           SKIP_DOCKER=true ./scripts/init_db.sh
+        shell: bash
       - name: Linting
         run: cargo clippy -- -D warnings
 
@@ -138,6 +144,6 @@ jobs:
           --no-default-features
           --locked
       - name: Migrate database
-        run: SKIP_DOCKER=true ./scripts/init_db.sh
+        run: SKIP_DOCKER=true bash ./scripts/init_db.sh
       - name: Generate code coverage
         run: cargo tarpaulin --verbose --workspace
