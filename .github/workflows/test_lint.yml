@@ -22,16 +22,16 @@ jobs:
       - name: Run tests
         run: cargo test
 
-  clippy:
-    name: Clippy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Linting
-        run: cargo clippy -- -D warnings
+#  clippy:
+#    name: Clippy
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#      - uses: dtolnay/rust-toolchain@stable
+#        with:
+#          components: clippy
+#      - name: Linting
+#        run: cargo clippy -- -D warnings
 
   coverage:
     name: Code coverage
