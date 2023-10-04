@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:14
+        image: postgres:16
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
@@ -35,7 +35,7 @@ jobs:
         ports:
           - 6379:6379
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -50,6 +50,7 @@ jobs:
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
+          chmod +x ./scripts/init_db.sh
           SKIP_DOCKER=true ./scripts/init_db.sh
       - name: Check sqlx-data.json is up-to-date
         run: |
@@ -61,7 +62,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
@@ -81,7 +82,7 @@ jobs:
         ports:
           - 5432:5432
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -120,7 +121,7 @@ jobs:
           - 6379:6379
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - name: Install libpq
         run: sudo apt-get update && sudo apt-get install postgresql-client -y
