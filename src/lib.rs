@@ -5,10 +5,11 @@ use actix_web::{web, App, HttpResponse, HttpServer};
 use serde::Deserialize;
 use std::net::TcpListener;
 
+#[allow(unused)]  // ### Remove this!
 #[derive(Deserialize)]
 struct FormData {
-    _email: String,
-    _name: String,
+    email: String,
+    name: String,
 }
 
 async fn health_check() -> HttpResponse {
