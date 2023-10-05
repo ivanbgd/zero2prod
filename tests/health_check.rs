@@ -5,6 +5,7 @@
 
 use rstest::rstest;
 use std::net::TcpListener;
+use zero2prod::startup::run;
 
 /// Spin up an instance of our application in the background and return its address (i.e., `http:://127.0.0.1:XXXX`)
 fn spawn_app() -> String {
@@ -16,8 +17,7 @@ fn spawn_app() -> String {
         .expect("Failed to unwrap listener's local address.").port();
 
     // We are not propagating errors like in `main()`, because this is a test function. We can simply panic instead.
-    let server = zero2prod::run(listener)
-        .unwrap_or_else(|_| panic!("Failed to bind the address {}:{}", addr, port));
+    let server = run(listener).unwrap_or_else(|_| panic!("Failed to bind the address {}:{}", addr, port));
 
     // Launch the server as a background task
     tokio::spawn(server);
