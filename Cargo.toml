@@ -15,10 +15,12 @@ name = "zero2prod"
 
 [dependencies]
 actix-web = "4"
-config = "0.13"
+chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
+config = { version = "0.13", default-features = false, features = ["yaml"] }
 serde = { version = "1.0", features = ["derive"] }
 sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+uuid = { version = "1", features = ["v4"] }
 
 # `[dev-dependencies]` are used exclusively when running tests or examples.
 # They are not included in the final application binary.
