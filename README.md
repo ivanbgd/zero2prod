@@ -6,3 +6,9 @@
 Implementation of the "Zero to Production in Rust" Book by Luca Palmieri
 
 https://www.zero2prod.com
+
+### The most notable technologies used
+- [Actix Web](https://actix.rs/) (actix-web), as web framework
+- [Tokio](https://tokio.rs/), as an asynchronous runtime
+- [Docker](https://www.docker.com/), for containerization
+- [PostgreSQL](https://www.postgresql.org/), as RDBMS
