@@ -7,7 +7,7 @@ use rstest::rstest;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
-use zero2prod::configuration::{DatabaseSettings, get_configuration};
+use zero2prod::configuration::{get_configuration, DatabaseSettings};
 use zero2prod::startup::run;
 
 pub struct TestApp {
@@ -20,10 +20,11 @@ pub struct TestApp {
 async fn spawn_app() -> TestApp {
     let addr = "127.0.0.1";
     let addr_port = format!("{}:0", addr);
-    let listener = TcpListener::bind(addr_port)
-        .expect("Failed to bind a random port.");
-    let port = listener.local_addr()
-        .expect("Failed to unwrap listener's local address.").port();
+    let listener = TcpListener::bind(addr_port).expect("Failed to bind a random port.");
+    let port = listener
+        .local_addr()
+        .expect("Failed to unwrap listener's local address.")
+        .port();
     let address = format!("http://{}:{}", addr, port);
 
     let mut configuration = get_configuration().expect("Failed to read configuration.");
@@ -37,10 +38,7 @@ async fn spawn_app() -> TestApp {
     // Launch the server as a background task
     tokio::spawn(server);
 
-    TestApp {
-        address,
-        db_pool,
-    }
+    TestApp { address, db_pool }
 }
 
 async fn configure_database(db_settings: &DatabaseSettings) -> PgPool {
@@ -147,19 +145,27 @@ async fn subscribe_returns_400_when_data_is_missing() {
             .expect("Failed to send request to '/subscriptions'.");
 
         // Assert
-        assert_eq!(400, response.status().as_u16(),
-                   "The API did not fail with 400 Bad Request when payload was {}.", error_message);
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad Request when payload was {}.",
+            error_message
+        );
     }
 }
 
 #[rstest(
-    invalid_body, error_message,
+    invalid_body,
+    error_message,
     case::missing_email("name=le%20guin", "missing the email"),
     case::missing_name("email=ursula_le_guin%40gmail.com", "missing the name"),
     case::missing_both_name_and_email("", "missing both name and email")
 )]
 #[tokio::test]
-async fn subscribe_returns_400_when_data_is_missing_parameterized(invalid_body: &'static str, error_message: &str) {
+async fn subscribe_returns_400_when_data_is_missing_parameterized(
+    invalid_body: &'static str,
+    error_message: &str,
+) {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
@@ -174,6 +180,10 @@ async fn subscribe_returns_400_when_data_is_missing_parameterized(invalid_body: 
         .expect("Failed to send request to '/subscriptions'.");
 
     // Assert
-    assert_eq!(400, response.status().as_u16(),
-               "The API did not fail with 400 Bad Request when payload was {}.", error_message);
+    assert_eq!(
+        400,
+        response.status().as_u16(),
+        "The API did not fail with 400 Bad Request when payload was {}.",
+        error_message
+    );
 }

@@ -28,8 +28,8 @@ pub async fn subscribe(
         form.name,
         Utc::now()
     )
-        .execute(pool.get_ref())
-        .await
+    .execute(pool.get_ref())
+    .await
     {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
