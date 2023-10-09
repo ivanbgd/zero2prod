@@ -21,7 +21,7 @@ pub async fn subscribe(
 ) -> HttpResponse {
     let request_id = Uuid::new_v4();
     let request_span = tracing::info_span!(
-        "Adding a new subscriber.",
+        "Adding a new subscriber",
         %request_id,
         subscriber_email = %form.email,
         subscriber_name = %form.name
@@ -32,16 +32,13 @@ pub async fn subscribe(
     // It is generally not needed anymore, after we've stopped using logging and switched to tracing, so it can be
     // removed in production-ready code. Namely, the above message contains the same data.
     tracing::info!(
-        r#"Request ID {} - Adding "{}" "{}" as a new subscriber."#,
+        "Request ID {} - Adding '{}' '{}' as a new subscriber",
         request_id,
         form.email,
         form.name
     );
 
-    let query_span = tracing::info_span!(
-        "Saving new subscriber details in the database.",
-        %request_id
-    );
+    let query_span = tracing::info_span!("Saving new subscriber details in the database");
     match sqlx::query!(
         r#"
             INSERT INTO subscriptions (id, email, name, subscribed_at)
@@ -58,19 +55,14 @@ pub async fn subscribe(
     {
         Ok(_) => {
             tracing::info!(
-                r#"Request ID {} - New subscriber details have been saved, "{}" "{}"."#,
-                request_id,
+                "New subscriber details have been saved, '{}' '{}'.",
                 form.email,
                 form.name
             );
             HttpResponse::Ok().finish()
         }
         Err(e) => {
-            tracing::error!(
-                r#"Request ID {} - Failed to execute query: "{:?}"."#,
-                request_id,
-                e
-            );
+            tracing::error!("Failed to execute query: '{:?}'.", e);
             HttpResponse::InternalServerError().finish()
         }
     }
