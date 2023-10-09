@@ -3,6 +3,7 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
+use tracing::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -27,15 +28,19 @@ pub async fn subscribe(
     );
     let _request_span_guard = request_span.enter();
 
+    // We are keeping this old log message and converting it to a trace info for the sake of comparison and education.
+    // It is generally not needed anymore, after we've stopped using logging and switched to tracing, so it can be
+    // removed in production-ready code. Namely, the above message contains the same data.
     tracing::info!(
         r#"Request ID {} - Adding "{}" "{}" as a new subscriber."#,
         request_id,
         form.email,
         form.name
     );
-    tracing::info!(
-        "Request ID {} - Saving new subscriber details in the database.",
-        request_id
+
+    let query_span = tracing::info_span!(
+        "Saving new subscriber details in the database.",
+        %request_id
     );
     match sqlx::query!(
         r#"
@@ -48,6 +53,7 @@ pub async fn subscribe(
         Utc::now()
     )
     .execute(pool.get_ref())
+    .instrument(query_span)
     .await
     {
         Ok(_) => {
