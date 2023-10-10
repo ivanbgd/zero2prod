@@ -115,8 +115,6 @@ async fn health_check_works() {
 
 #[tokio::test]
 async fn subscribe_returns_200_for_valid_form_data() {
-    println!("Hello from subscribe_returns_200_for_valid_form_data!!!"); // REMOVE!!!
-
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();

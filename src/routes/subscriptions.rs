@@ -3,7 +3,6 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
-use tracing::Instrument;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -14,32 +13,47 @@ pub struct FormData {
 
 /// Subscribe a new member
 ///
-/// We retrieve a connection from the application state.
+/// An orchestrator function which calls the required routines and translates their output
+/// into a proper HTTP response.
+/// We retrieve a connection from the application state (which is defined at startup).
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(form, pool),
+    fields(
+        request_id = %Uuid::new_v4(),
+        subscriber_email = %form.email,
+        subscriber_name = %form.name
+    )
+)]
 pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let request_id = Uuid::new_v4();
-    let request_span = tracing::info_span!(
-        "Adding a new subscriber",
-        %request_id,
-        subscriber_email = %form.email,
-        subscriber_name = %form.name
-    );
-    let _request_span_guard = request_span.enter();
+    match insert_subscriber(&form, &pool).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
+}
 
-    // We are keeping this old log message and converting it to a trace info for the sake of comparison and education.
-    // It is generally not needed anymore, after we've stopped using logging and switched to tracing, so it can be
-    // removed in production-ready code. Namely, the above message contains the same data.
-    tracing::info!(
-        "Request ID {} - Adding '{}' '{}' as a new subscriber",
-        request_id,
-        form.email,
-        form.name
-    );
-
-    let query_span = tracing::info_span!("Saving new subscriber details in the database");
-    match sqlx::query!(
+/// Insert the new subscriber details in a Postgres database
+///
+/// This function doesn't depend, nor is aware, of a potentially surrounding (web) framework,
+/// which is good. The input parameters are not necessarily of a web-type.
+/// This function just executes a DB query.
+/// This is a quasi-DAL, although still not fully-independent (not fully-abstract).
+/// It is specialized for the Postgres database, though, so still not 100% generic,
+/// but at least it only knows about a DB and only works with a DB.
+/// Sure enough, if it were fully-abstract, it would be abstracted away from a DB as well,
+/// because data in general do not necessarily have to be persisted in a DB.
+/// So, there is room for improvement, for even better abstraction and separation of concerns,
+/// for even looser coupling, but is a step in the right direction.
+/// We could add a true DAL, because this is more of a concrete data-layer implementation than a DAL.
+#[tracing::instrument(
+    name = "Saving the new subscriber details in the database",
+    skip(form, pool)
+)]
+pub async fn insert_subscriber(form: &FormData, pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query!(
         r#"
             INSERT INTO subscriptions (id, email, name, subscribed_at)
             VALUES ($1, $2, $3, $4)
@@ -49,21 +63,12 @@ pub async fn subscribe(
         form.name,
         Utc::now()
     )
-    .execute(pool.get_ref())
-    .instrument(query_span)
+    .execute(pool)
     .await
-    {
-        Ok(_) => {
-            tracing::info!(
-                "New subscriber details have been saved, '{}' '{}'.",
-                form.email,
-                form.name
-            );
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!("Failed to execute query: '{:?}'.", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: '{:?}'.", e);
+        e
+    })?;
+
+    Ok(())
 }
