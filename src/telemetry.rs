@@ -4,11 +4,19 @@ use tracing::subscriber::set_global_default;
 use tracing::Subscriber;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
+use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 /// Compose multiple layers into a `tracing`'s subscriber
-pub fn get_subscriber(name: &str, log_level: &str) -> impl Subscriber + Send + Sync {
-    let formatting_layer = BunyanFormattingLayer::new(String::from(name), std::io::stdout);
+pub fn get_subscriber<Sink>(
+    name: &str,
+    log_level: &str,
+    sink: Sink,
+) -> impl Subscriber + Send + Sync
+where
+    Sink: for<'a> MakeWriter<'a> + Send + Sync + 'static,
+{
+    let formatting_layer = BunyanFormattingLayer::new(String::from(name), sink);
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new(String::from(log_level)));
     let subscriber = Registry::default()

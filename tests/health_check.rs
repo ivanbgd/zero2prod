@@ -3,12 +3,27 @@
 //! Run with:
 //! `cargo test --test health_check`
 
+use once_cell::sync::Lazy;
 use rstest::rstest;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
 use zero2prod::startup::run;
+use zero2prod::telemetry::{get_subscriber, init_subscriber};
+
+// Ensure that the `tracing` stack is initialized only once by using `once_cell`
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let subscriber_name = "test";
+    let default_log_level = "debug";
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber = get_subscriber(subscriber_name, default_log_level, std::io::stdout);
+        init_subscriber(subscriber);
+    } else {
+        let subscriber = get_subscriber(subscriber_name, default_log_level, std::io::sink);
+        init_subscriber(subscriber);
+    }
+});
 
 pub struct TestApp {
     pub address: String,
@@ -18,6 +33,11 @@ pub struct TestApp {
 /// Spin up an instance of our application in the background and return a `TestApp` struct
 /// with the app's address (i.e., `http:://127.0.0.1:XXXX`) and a handle to the connection pool.
 async fn spawn_app() -> TestApp {
+    // The code in `TRACING` is executed only the first time `spawn_app` is invoked.
+    // All other invocations will skip its execution.
+    // This means that subscriber initialization happens only once.
+    Lazy::force(&TRACING);
+
     let addr = "127.0.0.1";
     let addr_port = format!("{}:0", addr);
     let listener = TcpListener::bind(addr_port).expect("Failed to bind a random port.");
@@ -42,7 +62,7 @@ async fn spawn_app() -> TestApp {
 }
 
 async fn configure_database(db_settings: &DatabaseSettings) -> PgPool {
-    let connection_string = db_settings.connection_string_without_database_name();
+    let connection_string = db_settings.get_connection_string_without_database_name();
 
     // Create database
     let mut connection = PgConnection::connect(&connection_string)
@@ -54,7 +74,7 @@ async fn configure_database(db_settings: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database.");
 
     // Migrate database
-    let db_pool = PgPool::connect(&db_settings.connection_string())
+    let db_pool = PgPool::connect(&db_settings.get_connection_string())
         .await
         .expect("Failed to create a new connection pool and to connect to Postgres.");
     sqlx::migrate!("./migrations")
@@ -95,6 +115,8 @@ async fn health_check_works() {
 
 #[tokio::test]
 async fn subscribe_returns_200_for_valid_form_data() {
+    println!("Hello from subscribe_returns_200_for_valid_form_data!!!"); // REMOVE!!!
+
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();

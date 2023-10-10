@@ -8,11 +8,11 @@ use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let subscriber = get_subscriber("zero2prod", "info");
+    let subscriber = get_subscriber("zero2prod", "info", std::io::stdout);
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to read configuration.");
-    let connection_string = configuration.database.connection_string();
+    let connection_string = configuration.database.get_connection_string();
     let db_pool = PgPool::connect(&connection_string)
         .await
         .expect("Failed to create a new connection pool and to connect to database.");
