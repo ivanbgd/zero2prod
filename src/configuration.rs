@@ -51,8 +51,11 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     let configuration_directory = base_path.join("configuration");
 
     // Detect the running environment. Default to "local" if unspecified.
-    let environment = std::env::var("APP_ENVIRONMENT").unwrap_or_else(|_| String::from("local"));
-    let environment_filename = format!("{}.yaml", environment);
+    let environment: Environment = std::env::var("APP_ENVIRONMENT")
+        .unwrap_or_else(|_| String::from("local"))
+        .try_into()
+        .expect("Failed to parse APP_ENVIRONMENT.");
+    let environment_filename = format!("{}.yaml", environment.as_str());
 
     let settings = config::Config::builder()
         .add_source(config::File::from(
@@ -64,4 +67,35 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
         .build()?;
 
     settings.try_deserialize::<Settings>()
+}
+
+/// Possible runtime environments for our application
+pub enum Environment {
+    Local,
+    Production,
+}
+
+impl Environment {
+    /// Convert `Environment` into a string slice
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Environment::Local => "local",
+            Environment::Production => "production",
+        }
+    }
+}
+
+impl TryFrom<String> for Environment {
+    type Error = String;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.to_lowercase().as_str() {
+            "local" => Ok(Self::Local),
+            "production" => Ok(Self::Production),
+            other => Err(format!(
+                "'{}' is not a supported environment. Supported environments are 'local' and 'production'.",
+                other
+            )),
+        }
+    }
 }
