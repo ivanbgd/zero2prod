@@ -1,4 +1,5 @@
 FROM rust:1.72.0
+LABEL authors="Ivan"
 
 WORKDIR /app
 
