@@ -19,7 +19,7 @@ where
     let formatting_layer = BunyanFormattingLayer::new(String::from(name), sink);
     let env_filter = EnvFilter::try_from_default_env()
         .unwrap_or_else(|_| EnvFilter::new(String::from(log_level)));
-    
+
     Registry::default()
         .with(env_filter)
         .with(JsonStorageLayer)
