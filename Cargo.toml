@@ -6,6 +6,9 @@ authors = ["Ivan Lazarević"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[profile.release]
+strip = true  # Automatically strip symbols from the binary on Linux and macOS.
+
 [lib]
 path = "src/lib.rs"
 
