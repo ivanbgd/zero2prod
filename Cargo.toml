@@ -22,6 +22,7 @@ chrono = { version = "0.4.22", default-features = false, features = ["clock"] }
 config = { version = "0.13", default-features = false, features = ["yaml"] }
 secrecy = { version = "0.8", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
+serde-aux = "4"
 sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio-rustls", "macros", "postgres", "uuid", "chrono", "migrate"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing = { version = "0.1", features = ["log"]}

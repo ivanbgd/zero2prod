@@ -5,7 +5,6 @@
 
 use once_cell::sync::Lazy;
 use rstest::rstest;
-use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -63,10 +62,10 @@ async fn spawn_app() -> TestApp {
 }
 
 async fn configure_database(db_settings: &DatabaseSettings) -> PgPool {
-    let connection_string = db_settings.get_connection_string_without_database_name();
+    let connection_options = db_settings.without_db();
 
     // Create database
-    let mut connection = PgConnection::connect(&connection_string.expose_secret())
+    let mut connection = PgConnection::connect_with(&connection_options)
         .await
         .expect("Failed to connect to Postgres.");
     connection
@@ -75,7 +74,7 @@ async fn configure_database(db_settings: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database.");
 
     // Migrate database
-    let db_pool = PgPool::connect(&db_settings.get_connection_string().expose_secret())
+    let db_pool = PgPool::connect_with(db_settings.with_db())
         .await
         .expect("Failed to create a new connection pool and to connect to Postgres.");
     sqlx::migrate!("./migrations")

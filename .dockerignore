@@ -4,5 +4,9 @@ migrations/
 scripts/
 target/
 tests/
+
 .env
 Dockerfile
+
+**/*.rs.bk
+*.pdb

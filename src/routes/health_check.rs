@@ -3,6 +3,6 @@
 use actix_web::HttpResponse;
 
 pub async fn health_check() -> HttpResponse {
-    tracing::info!("Health check is working!");
+    tracing::debug!("Health check is working!");
     HttpResponse::Ok().finish()
 }
