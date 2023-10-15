@@ -1,6 +1,6 @@
 //! src/routes/subscriptions.rs
 
-use crate::domain::SubscriberName;
+use crate::domain::{NewSubscriber, SubscriberName};
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
@@ -17,6 +17,7 @@ pub struct FormData {
 /// An orchestrator function which calls the required routines and translates their output
 /// into a proper HTTP response.
 /// We retrieve a connection from the application state (which is defined at startup).
+#[allow(clippy::async_yields_async)]
 #[tracing::instrument(
     name = "Adding a new subscriber",
     skip(form, pool),
@@ -29,15 +30,13 @@ pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let subscriber_name = SubscriberName::parse(form.name.clone());
+    let subscriber_name = SubscriberName::parse(form.name);
+    let new_subscriber = NewSubscriber {
+        email: form.email,
+        name: subscriber_name,
+    };
 
-    // Kept just as an exercise and to demonstrate the most basic form of validation,
-    // which is, unfortunately, not good enough in practice.
-    // if !is_valid_name(&form.name) {
-    //     return HttpResponse::BadRequest().finish();
-    // }
-
-    match insert_subscriber(&form, &pool).await {
+    match insert_subscriber(&new_subscriber, &pool).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
@@ -58,17 +57,20 @@ pub async fn subscribe(
 /// We could add a true DAL, because this is more of a concrete data-layer implementation than a DAL.
 #[tracing::instrument(
     name = "Saving the new subscriber details in the database",
-    skip(form, pool)
+    skip(new_subscriber, pool)
 )]
-pub async fn insert_subscriber(form: &FormData, pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn insert_subscriber(
+    new_subscriber: &NewSubscriber,
+    pool: &PgPool,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
             INSERT INTO subscriptions (id, email, name, subscribed_at)
             VALUES ($1, $2, $3, $4)
         "#,
         Uuid::new_v4(),
-        form.email,
-        form.name,
+        new_subscriber.email,
+        new_subscriber.name.get_name(),
         Utc::now()
     )
     .execute(pool)
