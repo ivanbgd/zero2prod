@@ -40,8 +40,12 @@ impl SubscriberName {
             SubscriberName(name)
         }
     }
+}
 
-    pub fn get_name(&self) -> &str {
+impl AsRef<str> for SubscriberName {
+    /// Get the inner value of `SubscriberName`, which is a `String`
+    /// that holds the subscriber's name; gets it as `&str`
+    fn as_ref(&self) -> &str {
         &self.0
     }
 }
