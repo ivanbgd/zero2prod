@@ -34,14 +34,7 @@ impl SubscriberName {
     /// are satisfied on subscriber name;
     /// # Panics otherwise.
     pub fn parse(name: String) -> SubscriberName {
-        let is_empty_or_whitespace = name.trim().is_empty();
-
-        let is_too_long = name.graphemes(true).count() > MAX_NAME_LEN;
-
-        let contains_a_forbidden_character =
-            name.chars().any(|c| FORBIDDEN_NAME_CHARACTERS.contains(&c));
-
-        if is_empty_or_whitespace || is_too_long || contains_a_forbidden_character {
+        if !is_valid_name(&name) {
             panic!("'{}' is not a valid subscriber name.", name)
         } else {
             SubscriberName(name)
@@ -54,15 +47,6 @@ impl SubscriberName {
 }
 
 /// Checks validity of a new user's name
-///
-/// **THIS IS MORE OF A PRACTICE AND TO SHOW HOW A SINGLE VALIDATION COULD**
-/// **BE PERFORMED AT ANY POINT, BUT WE ARE GIVING UP ON THIS AS WE DON'T WANT**
-/// **TO RELY ON HAVING TO REMEMBER TO PERFORM VALIDATION AT VARIOUS POINTS**
-/// **IN TIME AND CODE. STILL, A UNIT TEST SUITE IS PROVIDED BELOW.**
-///
-/// **WE ARE INSTEAD USING A PARSING FUNCTION, WHICH RETURNS A STRUCTURED OUTPUT.**
-///
-/// **WE COULD USE THIS FUNCTION AND ITS OUTPUT INSIDE THE PARSE FUNCTION.**
 ///
 /// Returns `true` if **ALL** input validation constraints are satisfied,
 /// `false` otherwise.
