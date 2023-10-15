@@ -49,15 +49,8 @@ pub fn is_valid_name(name: &str) -> bool {
 
     let is_too_long = name.graphemes(true).count() > MAX_NAME_LEN;
 
-    let mut contains_a_forbidden_character = false;
-    'outer: for name_char in name.chars() {
-        for forbidden_char in FORBIDDEN_NAME_CHARACTERS {
-            if name_char == forbidden_char {
-                contains_a_forbidden_character = true;
-                break 'outer;
-            }
-        }
-    }
+    let contains_a_forbidden_character =
+        name.chars().any(|c| FORBIDDEN_NAME_CHARACTERS.contains(&c));
 
     !(is_empty_or_whitespace || is_too_long || contains_a_forbidden_character)
 }
