@@ -30,10 +30,15 @@ pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let subscriber_name = SubscriberName::parse(form.name).expect("Name validation failed.");
+    let name = match SubscriberName::parse(form.name) {
+        Ok(name) => name,
+
+        // Return early with 400 if the name is invalid
+        Err(_) => return HttpResponse::BadRequest().finish(),
+    };
     let new_subscriber = NewSubscriber {
         email: form.email,
-        name: subscriber_name,
+        name,
     };
 
     match insert_subscriber(&new_subscriber, &pool).await {
