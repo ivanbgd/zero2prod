@@ -7,11 +7,11 @@ pub struct NewSubscriber {
 }
 
 /// This is a tuple-struct with a single private anonymous `String` field.
-/// We deliberately don't want to make the field public.
+/// We purposefully don't want to make the field public.
 /// Instead, we want to create instances of `SubscriberName` through the
 /// `parse` method, which performs input validation of the name, and **only**
-/// outputs the name if it is **valid**, and panics if it is not valid
-/// according to our constraints.
+/// outputs the name if it is **valid**, and returns an error if
+/// the name is not valid according to our constraints.
 ///
 /// So, whenever we want to create a `SubscriberName`, validation will be
 /// performed automatically for us, and therefore we **cannot forget** to do it.
@@ -19,7 +19,7 @@ pub struct NewSubscriber {
 /// forgetting to validate the input whenever/wherever the validation should be done.
 /// An incorrect usage pattern is simply impossible, because it will
 /// not compile, thanks to the Rust compiler.
-/// This is known as "type-driven development".
+/// This is known as **"type-driven development"**.
 ///
 /// This further means that we can rest assured that *all* instances of
 /// `SubscriberName` satisfy *all* our validation constraints.
@@ -33,11 +33,10 @@ impl SubscriberName {
     ///
     /// Returns an instance of `SubscriberName` if **ALL** input validation constraints
     /// are satisfied on subscriber name;
-    /// # Panics otherwise.
+    /// `Err<String>` otherwise.
     pub fn parse(name: String) -> Result<SubscriberName, String> {
         if !is_valid_name(&name) {
-            panic!(r#""{}" is not a valid subscriber name."#, name)
-            // Err(format!("'{}' is not a valid subscriber name.", name))
+            Err(format!(r#"'{}' is not a valid subscriber name."#, name))
         } else {
             Ok(SubscriberName(name))
         }
@@ -95,7 +94,7 @@ mod tests {
     )]
     fn is_valid_name_passes_valid_names_cases_a(valid_name: &'static str) {
         let is_valid = is_valid_name(valid_name);
-        assert_eq!(true, is_valid, "Rejected a valid name '{}'.", valid_name);
+        assert_eq!(true, is_valid, r#"Rejected a valid name "{}"."#, valid_name);
     }
 
     /// Test `is_valid_name` with valid names (positive test cases) - Implementation 2
@@ -113,7 +112,7 @@ mod tests {
     #[case::punctuation(". , ? ! : ; - _")]
     fn is_valid_name_passes_valid_names_cases_b(#[case] valid_name: &str) {
         let is_valid = is_valid_name(valid_name);
-        assert_eq!(true, is_valid, "Rejected a valid name '{}'.", valid_name);
+        assert_eq!(true, is_valid, r#"Rejected a valid name "{}"."#, valid_name);
     }
 
     /// Test `is_valid_name` with valid names (positive test cases) - Implementation 3
@@ -127,7 +126,7 @@ mod tests {
         valid_name: &str,
     ) {
         let is_valid = is_valid_name(valid_name);
-        assert_eq!(true, is_valid, "Rejected a valid name '{}'.", valid_name);
+        assert_eq!(true, is_valid, r#"Rejected a valid name "{}"."#, valid_name);
     }
 
     /// Test `is_valid_name` with invalid names (negative test cases) - Implementation 1
@@ -154,7 +153,7 @@ mod tests {
         let is_valid = is_valid_name(invalid_name);
         assert_eq!(
             false, is_valid,
-            "Didn't reject the invalid name '{}' (name is {}).",
+            r#"Didn't reject the invalid name "{}" (name is {})."#,
             invalid_name, error_message
         );
     }
@@ -184,7 +183,7 @@ mod tests {
         let is_valid = is_valid_name(invalid_name);
         assert_eq!(
             false, is_valid,
-            "Didn't reject the invalid name '{}' (name is {}).",
+            r#"Didn't reject the invalid name "{}" (name is {})."#,
             invalid_name, error_message
         );
     }
@@ -201,7 +200,7 @@ mod tests {
         let is_valid = is_valid_name(invalid_name.to_string().as_str());
         assert_eq!(
             false, is_valid,
-            "Didn't reject the invalid name '{}'.",
+            r#"Didn't reject the invalid name "{}"."#,
             invalid_name
         );
     }
@@ -218,18 +217,17 @@ mod tests {
         );
         assert_ok!(
             SubscriberName::parse(valid_name.clone()),
-            "Rejected a valid name '{}'.",
+            r#"Rejected a valid name "{}"."#,
             valid_name
         );
     }
 
     #[test]
-    #[should_panic]
     fn parse_rejects_empty_name() {
         let invalid_name = String::from("");
         assert_err!(
             SubscriberName::parse(invalid_name.clone()),
-            "Didn't reject the invalid name '{}'.",
+            r#"Didn't reject the invalid name "{}"."#,
             invalid_name
         );
     }
@@ -239,12 +237,11 @@ mod tests {
     /// But, we are still able to use a different, customized, error message for each test case,
     /// and that's what we are doing here. They are customized by the invalid name.
     #[test]
-    #[should_panic]
     fn parse_rejects_names_with_invalid_characters() {
         for invalid_name in FORBIDDEN_NAME_CHARACTERS {
             assert_err!(
                 SubscriberName::parse(invalid_name.to_string()),
-                "Didn't reject the invalid name '{}'.",
+                r#"Didn't reject the invalid name "{}"."#,
                 invalid_name
             );
         }
