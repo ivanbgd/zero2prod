@@ -144,7 +144,7 @@ async fn subscribe_returns_200_for_valid_form_data() {
 }
 
 #[tokio::test]
-async fn subscribe_returns_400_when_data_is_missing() {
+async fn subscribe_returns_400_when_fields_are_missing() {
     // Arrange
     let app = spawn_app().await;
     let client = reqwest::Client::new();
@@ -182,7 +182,7 @@ async fn subscribe_returns_400_when_data_is_missing() {
     case::missing_both_name_and_email("", "missing both name and email")
 )]
 #[tokio::test]
-async fn subscribe_returns_400_when_data_is_missing_parameterized(
+async fn subscribe_returns_400_when_fields_are_missing_parameterized(
     invalid_body: &'static str,
     error_message: &str,
 ) {
@@ -204,6 +204,40 @@ async fn subscribe_returns_400_when_data_is_missing_parameterized(
         400,
         response.status().as_u16(),
         "The API did not fail with 400 Bad Request when payload was {}.",
+        error_message
+    );
+}
+
+#[rstest(
+    invalid_body,
+    error_message,
+    case::empty_email("name=le%20guin&email=", "empty email"),
+    case::empty_name("name=&email=ursula_le_guin%40gmail.com", "empty name"),
+    case::invalid_email("name=Ursula&email=definitely-not-an-email", "invalid email")
+)]
+#[tokio::test]
+async fn subscribe_returns_400_when_fields_are_present_but_invalid(
+    invalid_body: &'static str,
+    error_message: &str,
+) {
+    // Arrange
+    let app = spawn_app().await;
+    let client = reqwest::Client::new();
+
+    // Act
+    let response = client
+        .post(format!("{}/subscriptions", app.address))
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(invalid_body)
+        .send()
+        .await
+        .expect("Failed to send request to '/subscriptions'.");
+
+    // Assert
+    assert_eq!(
+        400,
+        response.status().as_u16(),
+        "The API did not fail with 400 Bad Request when payload was an {}.",
         error_message
     );
 }

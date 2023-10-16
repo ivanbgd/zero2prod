@@ -1,11 +1,6 @@
 use crate::consts::{FORBIDDEN_NAME_CHARACTERS, MAX_NAME_LEN};
 use unicode_segmentation::UnicodeSegmentation;
 
-pub struct NewSubscriber {
-    pub email: String,
-    pub name: SubscriberName,
-}
-
 /// This is a tuple-struct with a single private anonymous `String` field.
 /// We purposefully don't want to make the field public.
 /// Instead, we want to create instances of `SubscriberName` through the
@@ -35,10 +30,10 @@ impl SubscriberName {
     /// are satisfied on subscriber name;
     /// `Err<String>` otherwise.
     pub fn parse(name: String) -> Result<SubscriberName, String> {
-        if !is_valid_name(&name) {
-            Err(format!(r#"'{}' is not a valid subscriber name."#, name))
-        } else {
+        if is_valid_name(&name) {
             Ok(SubscriberName(name))
+        } else {
+            Err(format!(r#""{}" is not a valid subscriber name."#, name))
         }
     }
 }
@@ -81,7 +76,7 @@ mod tests {
     ///
     /// An example of the use of `case`.
     /// These test cases can be and are named in definition and in the stdout, where they are additionally numbered.
-    /// But, we don't have to name them. We can name some of them.
+    /// But, we don't have to name them. We can name some of them. We have chosen to name all of them.
     /// The `'static` lifetime for `valid_name` is not required.
     #[rstest(
         valid_name,
@@ -102,7 +97,7 @@ mod tests {
     /// An example of an alternative use of `case`.
     /// These test cases don't have to be named in definition, and consequently won't be named in the stdout,
     /// but they will be automatically numbered.
-    /// But, we can name some or all of them if we want to.
+    /// But, we can name some or all of them if we want to. We have named some of them.
     #[rstest]
     #[case("John")]
     #[case::first_last("John Doe")]
@@ -131,7 +126,7 @@ mod tests {
 
     /// Test `is_valid_name` with invalid names (negative test cases) - Implementation 1
     ///
-    /// These tests are numbered and can be named.
+    /// These tests are numbered and can be named. We have chosen to name all of them.
     #[rstest(
         invalid_name,
         error_message,
@@ -160,7 +155,7 @@ mod tests {
 
     /// Test `is_valid_name` with invalid names (negative test cases) - Implementation 2
     ///
-    /// These tests are numbered, and not named by default, but can be named.
+    /// These tests are numbered, and not named by default, but can be named (some are).
     /// The `'static` lifetime for `invalid_name` is not required.
     #[rstest]
     #[case("", "empty")]
@@ -205,9 +200,15 @@ mod tests {
         );
     }
 
-    #[test]
-    fn parse_valid_name() {
-        let valid_name = String::from("  \t \n  John-å  \t \n  å_Doe ?! \t \n  ");
+    #[rstest]
+    #[case::first_name("John")]
+    #[case::first_last("John Doe")]
+    #[case::first_last_whitespace("  \t \n  John  \t \n  Doe \t \n  ")]
+    #[case::non_ascii("å")]
+    #[case::non_ascii_max_long("&VALID_MAX_LONG_NAME")]
+    #[case::punctuation(". , ? ! : ; - _")]
+    fn parse_accepts_valid_names(#[case] valid_name: &str) {
+        let valid_name = String::from(valid_name);
         let subscriber_name = SubscriberName::parse(valid_name.clone()).unwrap();
         assert_eq!(
             valid_name,
@@ -222,11 +223,30 @@ mod tests {
         );
     }
 
-    #[test]
-    fn parse_rejects_empty_name() {
-        let invalid_name = String::from("");
+    #[rstest(
+        invalid_name,
+        error_message,
+        case::empty_name("", "empty"),
+        case::single_whitespace_name(" ", "an empty space"),
+        case::whitespace_name(" \t \r \n   ", "whitespace"),
+        case::too_long(&TOO_LONG_NAME, "too long"),
+    )]
+    fn parse_rejects_invalid_names(invalid_name: &str, error_message: &str) {
+        let invalid_name = String::from(invalid_name);
         assert_err!(
             SubscriberName::parse(invalid_name.clone()),
+            r#"Didn't reject the invalid name "{}" (name is {})."#,
+            invalid_name,
+            error_message
+        );
+    }
+
+    #[rstest]
+    fn parse_rejects_names_with_invalid_characters_parameterized(
+        #[values('/', '(', ')', '"', '<', '>', '\\', '{', '}')] invalid_name: char,
+    ) {
+        assert_err!(
+            SubscriberName::parse(invalid_name.to_string()),
             r#"Didn't reject the invalid name "{}"."#,
             invalid_name
         );
@@ -237,7 +257,7 @@ mod tests {
     /// But, we are still able to use a different, customized, error message for each test case,
     /// and that's what we are doing here. They are customized by the invalid name.
     #[test]
-    fn parse_rejects_names_with_invalid_characters() {
+    fn parse_rejects_names_with_invalid_characters_not_parameterized() {
         for invalid_name in FORBIDDEN_NAME_CHARACTERS {
             assert_err!(
                 SubscriberName::parse(invalid_name.to_string()),
