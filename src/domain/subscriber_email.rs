@@ -36,11 +36,13 @@ mod tests {
     use super::SubscriberEmail;
 
     use claims::{assert_err, assert_ok};
+    use fake::faker::internet::en::SafeEmail;
+    use fake::Fake;
     use rstest::rstest;
 
-    /// Asserting in three different ways
+    /// Asserting SUCCESS in three different ways
     #[test]
-    fn parse_accepts_valid_email() {
+    fn parse_accepts_valid_email_hard_coded() {
         assert_ok!(SubscriberEmail::parse(String::from("john.doe@domain.yq")));
 
         assert!(SubscriberEmail::parse(String::from("john.doe@domain.yq")).is_ok());
@@ -53,7 +55,12 @@ mod tests {
         );
     }
 
-    /// Asserting in two different ways
+    #[test]
+    fn parse_accepts_valid_email_using_fake() {
+        assert_ok!(SubscriberEmail::parse(SafeEmail().fake()));
+    }
+
+    /// Asserting FAILURE in two different ways
     #[rstest(
         email,
         case::empty(""),
