@@ -29,6 +29,8 @@ impl SubscriberName {
     /// Returns an instance of `SubscriberName` if **ALL** input validation constraints
     /// are satisfied on subscriber name;
     /// `Err<String>` otherwise.
+    ///
+    /// We have implemented our own validation logic per our constraints.
     pub fn parse(name: String) -> Result<SubscriberName, String> {
         if is_valid_name(&name) {
             Ok(SubscriberName(name))
@@ -38,9 +40,10 @@ impl SubscriberName {
     }
 }
 
+/// Needed so we can extract the contained private `String` field.
 impl AsRef<str> for SubscriberName {
-    /// Get the inner value of `SubscriberName`, which is a `String`
-    /// that holds the subscriber's name; gets it as `&str`
+    /// Gets the private inner value of `SubscriberName`, which is a `String`
+    /// that holds the subscriber's name; gets it as `&str`.
     fn as_ref(&self) -> &str {
         &self.0
     }

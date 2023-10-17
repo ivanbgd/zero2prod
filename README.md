@@ -9,11 +9,12 @@ Code is similar to the original, but not exactly the same. It is not a copy-past
 
 Some improvements have been made by me.
 
-One of the most notable improvements that I've made is the usage of the [rstest](https://docs.rs/rstest/latest/rstest/) crate for testing.  
-The crate helps us in writing tests.  
+One of the most notable improvements that I've made is the usage of the [rstest](https://docs.rs/rstest/latest/rstest/) crate for **testing**. The crate helps us in writing tests.  
 It allows for test parameterization, for example. The feature allows for having unique test names and customized error messages per test case.  
-Files in the `src/domain` directory contain some examples and alternative implementations.  
+Files in the [src/domain](src/domain) directory contain some examples and alternative implementations.  
 So, some things have been implemented two or even three times, but in a different way, for the sake of example.
+
+The [src/domain](src/domain) directory also contains some useful notes about input *name* and *email* **validation** (similar, but different notes).
 
 ### The Most Notable Crates Used
 - [Actix Web](https://actix.rs/) (actix-web), as web framework
@@ -26,3 +27,6 @@ So, some things have been implemented two or even three times, but in a differen
 - [rstest](https://docs.rs/rstest/latest/rstest/), for testing
 - [config](https://docs.rs/config/latest/config/), for configuration
 - [secrecy](https://docs.rs/secrecy/latest/secrecy/), for more careful handling of secret values
+- [validator](https://crates.io/crates/validator), for input validation
+- [fake](https://crates.io/crates/fake), for generating fake data for testing
+- [quickcheck](https://crates.io/crates/quickcheck), for property-based testing
