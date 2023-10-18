@@ -32,7 +32,7 @@ pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let new_subscriber = match parse_subscriber(form) {
+    let new_subscriber = match NewSubscriber::try_from(form) {
         Ok(new_subscriber) => new_subscriber,
 
         // Return early with 400 Bad Request if the new subscriber is invalid
