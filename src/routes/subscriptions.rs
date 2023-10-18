@@ -14,8 +14,10 @@ pub struct FormData {
 
 /// Subscribe a new member
 ///
+/// This is a request handler for the `POST /subscriptions` endpoint.
+///
 /// An orchestrator function which calls the required routines and translates their output
-/// into a proper HTTP response.
+/// into a proper HTTP response to the incoming HTTP request.
 /// We retrieve a connection from the application state (which is defined at startup).
 #[allow(clippy::async_yields_async)]
 #[tracing::instrument(
@@ -43,10 +45,29 @@ pub async fn subscribe(
     }
 }
 
+/// Converts form data into `NewSubscriber`.
+///
+/// Converts data from our *wire format* (the URL-decoded data obtained from a web (HTML) form)
+/// to our *domain model*, `NewSubscriber`.
 fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
     let email = SubscriberEmail::parse(form.email)?;
     let name = SubscriberName::parse(form.name)?;
     Ok(NewSubscriber { email, name })
+}
+
+impl TryFrom<FormData> for NewSubscriber {
+    type Error = String;
+
+    /// Converts form data into `NewSubscriber`.
+    ///
+    /// Converts data from our *wire format* (the URL-decoded data obtained from a web (HTML) form)
+    /// to our *domain model*, `NewSubscriber`.
+    fn try_from(form: FormData) -> Result<Self, Self::Error> {
+        let email = SubscriberEmail::parse(form.email)?;
+        let name = SubscriberName::parse(form.name)?;
+
+        Ok(NewSubscriber { email, name })
+    }
 }
 
 /// Insert the new subscriber details in a Postgres database
