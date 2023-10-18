@@ -30,24 +30,23 @@ pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let email = match SubscriberEmail::parse(form.email) {
-        Ok(email) => email,
+    let new_subscriber = match parse_subscriber(form) {
+        Ok(new_subscriber) => new_subscriber,
 
-        // Return early with 400 Bad Request if the email is invalid
+        // Return early with 400 Bad Request if the new subscriber is invalid
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
-    let name = match SubscriberName::parse(form.name) {
-        Ok(name) => name,
-
-        // Return early with 400 Bad Request if the name is invalid
-        Err(_) => return HttpResponse::BadRequest().finish(),
-    };
-    let new_subscriber = NewSubscriber { email, name };
 
     match insert_subscriber(&new_subscriber, &pool).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
+}
+
+fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
+    let email = SubscriberEmail::parse(form.email)?;
+    let name = SubscriberName::parse(form.name)?;
+    Ok(NewSubscriber { email, name })
 }
 
 /// Insert the new subscriber details in a Postgres database
@@ -67,7 +66,7 @@ pub async fn subscribe(
     name = "Saving the new subscriber details in the database",
     skip(new_subscriber, pool)
 )]
-pub async fn insert_subscriber(
+async fn insert_subscriber(
     new_subscriber: &NewSubscriber,
     pool: &PgPool,
 ) -> Result<(), sqlx::Error> {
