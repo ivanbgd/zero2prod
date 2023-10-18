@@ -32,7 +32,8 @@ pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let new_subscriber = match NewSubscriber::try_from(form) {
+    // let new_subscriber = match NewSubscriber::try_from(form) {
+    let new_subscriber = match form.try_into() {
         Ok(new_subscriber) => new_subscriber,
 
         // Return early with 400 Bad Request if the new subscriber is invalid
@@ -43,16 +44,6 @@ pub async fn subscribe(
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
-}
-
-/// Converts form data into `NewSubscriber`.
-///
-/// Converts data from our *wire format* (the URL-decoded data obtained from a web (HTML) form)
-/// to our *domain model*, `NewSubscriber`.
-fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
-    let email = SubscriberEmail::parse(form.email)?;
-    let name = SubscriberName::parse(form.name)?;
-    Ok(NewSubscriber { email, name })
 }
 
 impl TryFrom<FormData> for NewSubscriber {
