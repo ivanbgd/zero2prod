@@ -32,8 +32,8 @@ pub async fn subscribe(
     web::Form(form): web::Form<FormData>,
     pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    // let new_subscriber = match NewSubscriber::try_from(form) {
-    let new_subscriber = match form.try_into() {
+    // Try to convert the `FormData` type into the `NewSubscriber` type
+    let new_subscriber = match NewSubscriber::try_from(form) {
         Ok(new_subscriber) => new_subscriber,
 
         // Return early with 400 Bad Request if the new subscriber is invalid
@@ -49,7 +49,9 @@ pub async fn subscribe(
 impl TryFrom<FormData> for NewSubscriber {
     type Error = String;
 
-    /// Converts form data into `NewSubscriber`.
+    /// Converts form data into a new subscriber "object" (struct).
+    ///
+    /// A type conversion that converts the `FormData` type into the `NewSubscriber` type.
     ///
     /// Converts data from our *wire format* (the URL-decoded data obtained from a web (HTML) form)
     /// to our *domain model*, `NewSubscriber`.
