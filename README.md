@@ -30,3 +30,5 @@ The [src/domain](src/domain) directory also contains some useful notes about inp
 - [validator](https://crates.io/crates/validator), for input validation
 - [fake](https://crates.io/crates/fake), for generating fake data for testing
 - [quickcheck](https://crates.io/crates/quickcheck), for property-based testing
+
+A full list of crates used can be found in [Cargo.toml](Cargo.toml).

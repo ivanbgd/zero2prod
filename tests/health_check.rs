@@ -9,6 +9,7 @@ use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
 use zero2prod::configuration::{get_configuration, DatabaseSettings};
+use zero2prod::email_client::EmailClient;
 use zero2prod::startup::run;
 use zero2prod::telemetry::{get_subscriber, init_subscriber};
 
@@ -48,11 +49,18 @@ async fn spawn_app() -> TestApp {
     let address = format!("http://{}:{}", addr, port);
 
     let mut configuration = get_configuration().expect("Failed to read configuration.");
+
     configuration.database.database_name = Uuid::new_v4().to_string();
     let db_pool = configure_database(&configuration.database).await;
 
+    let sender_email = configuration
+        .email_client
+        .get_sender()
+        .expect("Invalid sender email address.");
+    let email_client = EmailClient::new(configuration.email_client.base_url, sender_email);
+
     // We are not propagating errors like in `main()`, because this is a test function. We can simply panic instead.
-    let server = run(listener, db_pool.clone())
+    let server = run(listener, db_pool.clone(), email_client)
         .unwrap_or_else(|_| panic!("Failed to bind the address '{}'.", address));
 
     // Launch the server as a background task

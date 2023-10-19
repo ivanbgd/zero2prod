@@ -7,3 +7,6 @@ database:
   host: "127.0.0.1"
   port: 5432
   database_name: "newsletter"
+email_client:
+  base_url: "127.0.0.1"
+  sender_email: "test@gmail.com"

@@ -17,7 +17,7 @@ use validator::validate_email;
 /// of execution, or it is immediately discarded at that moment, so it doesn't enter our
 /// system as an invalid value, and the user of the `SubscriberEmail::parse` function
 /// will be notified of the error and should handle it properly (as desired).
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct SubscriberEmail(String);
 
 impl SubscriberEmail {
