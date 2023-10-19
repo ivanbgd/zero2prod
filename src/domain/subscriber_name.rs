@@ -92,7 +92,7 @@ mod tests {
     )]
     fn is_valid_name_passes_valid_names_cases_a(valid_name: &'static str) {
         let is_valid = is_valid_name(valid_name);
-        assert_eq!(true, is_valid, r#"Rejected a valid name "{}"."#, valid_name);
+        assert!(is_valid, r#"Rejected a valid name "{}"."#, valid_name);
     }
 
     /// Test `is_valid_name` with valid names (positive test cases) - Implementation 2
@@ -110,7 +110,7 @@ mod tests {
     #[case::punctuation(". , ? ! : ; - _")]
     fn is_valid_name_passes_valid_names_cases_b(#[case] valid_name: &str) {
         let is_valid = is_valid_name(valid_name);
-        assert_eq!(true, is_valid, r#"Rejected a valid name "{}"."#, valid_name);
+        assert!(is_valid, r#"Rejected a valid name "{}"."#, valid_name);
     }
 
     /// Test `is_valid_name` with valid names (positive test cases) - Implementation 3
@@ -124,7 +124,7 @@ mod tests {
         valid_name: &str,
     ) {
         let is_valid = is_valid_name(valid_name);
-        assert_eq!(true, is_valid, r#"Rejected a valid name "{}"."#, valid_name);
+        assert!(is_valid, r#"Rejected a valid name "{}"."#, valid_name);
     }
 
     /// Test `is_valid_name` with invalid names (negative test cases) - Implementation 1
@@ -149,8 +149,8 @@ mod tests {
     )]
     fn is_valid_name_rejects_invalid_names_case_a(invalid_name: &str, error_message: &str) {
         let is_valid = is_valid_name(invalid_name);
-        assert_eq!(
-            false, is_valid,
+        assert!(
+            !is_valid,
             r#"Didn't reject the invalid name "{}" (name is {})."#,
             invalid_name, error_message
         );
@@ -179,8 +179,8 @@ mod tests {
         #[case] error_message: &str,
     ) {
         let is_valid = is_valid_name(invalid_name);
-        assert_eq!(
-            false, is_valid,
+        assert!(
+            !is_valid,
             r#"Didn't reject the invalid name "{}" (name is {})."#,
             invalid_name, error_message
         );
@@ -196,8 +196,8 @@ mod tests {
         #[values('/', '(', ')', '"', '<', '>', '\\', '{', '}')] invalid_name: char,
     ) {
         let is_valid = is_valid_name(invalid_name.to_string().as_str());
-        assert_eq!(
-            false, is_valid,
+        assert!(
+            !is_valid,
             r#"Didn't reject the invalid name "{}"."#,
             invalid_name
         );
