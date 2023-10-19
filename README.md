@@ -22,7 +22,7 @@ The [src/domain](src/domain) directory also contains some useful notes about inp
 - [Docker](https://www.docker.com/), for containerization
 - [PostgreSQL](https://www.postgresql.org/), as RDBMS
 - [sqlx](https://docs.rs/sqlx/latest/sqlx/), as an async SQL toolkit for Rust
-- [reqwest](https://docs.rs/reqwest/latest/reqwest/), as HTTP client
+- [reqwest](https://docs.rs/reqwest/latest/reqwest/), as an HTTP client for sending e-mails and for integration testing
 - [tracing](https://docs.rs/tracing/latest/tracing/index.html), for collecting scoped, structured, event-based diagnostic information
 - [rstest](https://docs.rs/rstest/latest/rstest/), for testing
 - [config](https://docs.rs/config/latest/config/), for configuration
