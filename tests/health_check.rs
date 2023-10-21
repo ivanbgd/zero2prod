@@ -57,7 +57,11 @@ async fn spawn_app() -> TestApp {
         .email_client
         .get_sender()
         .expect("Invalid sender email address.");
-    let email_client = EmailClient::new(configuration.email_client.base_url, sender_email);
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
 
     // We are not propagating errors like in `main()`, because this is a test function. We can simply panic instead.
     let server = run(listener, db_pool.clone(), email_client)

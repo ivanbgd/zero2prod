@@ -25,6 +25,7 @@ The [src/domain](src/domain) directory also contains some useful notes about inp
 - [reqwest](https://docs.rs/reqwest/latest/reqwest/), as an HTTP client for sending e-mails and for integration testing
 - [tracing](https://docs.rs/tracing/latest/tracing/index.html), for collecting scoped, structured, event-based diagnostic information
 - [rstest](https://docs.rs/rstest/latest/rstest/), for testing
+- [wiremock](https://crates.io/crates/wiremock), for HTTP mocking for black-box testing
 - [config](https://docs.rs/config/latest/config/), for configuration
 - [secrecy](https://docs.rs/secrecy/latest/secrecy/), for more careful handling of secret values
 - [validator](https://crates.io/crates/validator), for input validation

@@ -9,4 +9,5 @@ database:
   database_name: "newsletter"
 email_client:
   base_url: "127.0.0.1"
-  sender_email: "test@gmail.com"
+  sender_email: "sender@example.com"
+  authorization_token: "my-secret-token"

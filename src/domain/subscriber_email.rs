@@ -90,7 +90,8 @@ mod tests {
     /// This allows us to combine the `quickcheck` and the `fake` crates,
     /// which lets us have multiple automatically generated random valid email addresses
     /// for our testing purpose.
-    /// We wrap `fake` in `quickcheck`.
+    /// We wrap `fake` in `quickcheck`. So, `quickcheck` loops what `fake` does
+    /// automatically for us.
     /// The `Arbitrary::shrink()` function is optional, as it has a default implementation.
     /// `shrink()` returns a sequence of progressively “smaller” instances of the type
     /// to help `quickcheck` find the smallest possible failure case.
