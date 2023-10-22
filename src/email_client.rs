@@ -105,6 +105,7 @@ mod tests {
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::{Paragraph, Sentence};
     use fake::{Fake, Faker};
+    use rstest::{fixture, rstest};
     use secrecy::Secret;
     use wiremock::matchers::{any, header, header_exists, method, path};
     use wiremock::{Match, Mock, MockServer, Request, ResponseTemplate};
@@ -119,7 +120,6 @@ mod tests {
             // Check that all mandatory fields are populated without inspecting the field values
             match result {
                 Ok(body) => {
-                    dbg!(&body);
                     body.get("From").is_some()
                         && body.get("To").is_some()
                         && body.get("Subject").is_some()
@@ -131,13 +131,64 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn send_email_sends_the_expected_request() {
-        // Arrange
+    struct EmailFields {
+        subscriber_email: SubscriberEmail,
+        subject: String,
+        content: String,
+    }
+
+    struct Arrange<'a> {
+        mock_server: MockServer,
+        email_client: EmailClient,
+        email_fields: &'a EmailFields,
+    }
+
+    /// `EmailFields` doesn't have to be initialized only `once`.
+    /// It can be different for different UTs.
+    /// We are using `once` here for educational purposes and to keep it
+    /// as an example of how we could use it.
+    /// Using `once` requires using a reference to the fixture value.
+    /// This complicates things a little, so there is no need to use `once`
+    /// unless that would be really beneficial, but we are purposefully
+    /// keeping this example to show where references need to be applied.
+    /// Since `EmailFields` is a `struct`, in addition to using references,
+    /// we need to use lifetime specifiers.
+    #[fixture]
+    #[once]
+    fn email_fields() -> EmailFields {
+        EmailFields {
+            subscriber_email: SubscriberEmail::parse(SafeEmail().fake()).unwrap(),
+            subject: Sentence(1..5).fake(),
+            content: Paragraph(1..10).fake(),
+        }
+    }
+
+    #[fixture]
+    async fn arrange(email_fields: &'static EmailFields) -> Arrange<'static> {
         let mock_server = MockServer::start().await;
         let base_url = mock_server.uri();
         let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
         let email_client = EmailClient::new(base_url, sender, Secret::new(Faker.fake()));
+
+        Arrange {
+            mock_server,
+            email_client,
+            email_fields,
+        }
+    }
+
+    #[rstest]
+    #[tokio::test]
+    async fn send_email_sends_the_expected_request(#[future] arrange: Arrange<'static>) {
+        // Arrange
+        let arrange = arrange.await;
+
+        let mock_server = arrange.mock_server;
+        let email_client = arrange.email_client;
+
+        let subscriber_email = &arrange.email_fields.subscriber_email;
+        let subject = &arrange.email_fields.subject;
+        let content = &arrange.email_fields.content;
 
         Mock::given(header_exists("X-Postmark-Server-Token"))
             .and(header("Content-Type", "application/json"))
@@ -150,13 +201,9 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
-
         // Act
         let _ = email_client
-            .send_email(subscriber_email, &subject, &content, &content)
+            .send_email(subscriber_email.clone(), subject, content, content)
             .await;
 
         // Assert
@@ -164,17 +211,18 @@ mod tests {
         // The `MockServer` will shutdown peacefully, without panicking.
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn send_email_succeeds_if_the_server_returns_200() {
+    async fn send_email_succeeds_if_the_server_returns_200(#[future] arrange: Arrange<'static>) {
         // Arrange
-        let mock_server = MockServer::start().await;
-        let base_url = mock_server.uri();
-        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client = EmailClient::new(base_url, sender, Secret::new(Faker.fake()));
+        let arrange = arrange.await;
 
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
+        let mock_server = arrange.mock_server;
+        let email_client = arrange.email_client;
+
+        let subscriber_email = &arrange.email_fields.subscriber_email;
+        let subject = &arrange.email_fields.subject;
+        let content = &arrange.email_fields.content;
 
         Mock::given(any())
             .respond_with(ResponseTemplate::new(200))
@@ -185,7 +233,7 @@ mod tests {
 
         // Act
         let response = email_client
-            .send_email(subscriber_email, &subject, &content, &content)
+            .send_email(subscriber_email.clone(), subject, content, content)
             .await;
 
         // Assert
