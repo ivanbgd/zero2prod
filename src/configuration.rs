@@ -61,11 +61,16 @@ pub struct EmailClientSettings {
     pub base_url: String,
     sender_email: String,
     pub authorization_token: Secret<String>,
+    timeout_millis: u64,
 }
 
 impl EmailClientSettings {
     pub fn get_sender(&self) -> Result<SubscriberEmail, String> {
         SubscriberEmail::parse(self.sender_email.clone())
+    }
+
+    pub fn get_timeout(&self) -> std::time::Duration {
+        std::time::Duration::from_millis(self.timeout_millis)
     }
 }
 

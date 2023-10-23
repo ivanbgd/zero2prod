@@ -57,10 +57,12 @@ async fn spawn_app() -> TestApp {
         .email_client
         .get_sender()
         .expect("Invalid sender email address.");
+    let timeout = configuration.email_client.get_timeout();
     let email_client = EmailClient::new(
         configuration.email_client.base_url,
         sender_email,
         configuration.email_client.authorization_token,
+        timeout,
     );
 
     // We are not propagating errors like in `main()`, because this is a test function. We can simply panic instead.

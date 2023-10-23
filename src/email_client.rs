@@ -47,9 +47,10 @@ impl EmailClient {
         base_url: String,
         sender: SubscriberEmail,
         authorization_token: Secret<String>,
+        timeout: std::time::Duration,
     ) -> Self {
         let http_client = Client::builder()
-            .timeout(std::time::Duration::from_millis(1000))
+            .timeout(timeout)
             .build()
             .expect("Failed to build an HTTP client.");
         Self {
@@ -142,6 +143,11 @@ mod tests {
         content: String,
     }
 
+    /// Used for the *Arrange* step in tests.
+    ///
+    /// Consists of a `MockServer`, `EmailClient` and the nested `EmailFields` structure.
+    /// This nesting is not necessary. `Arrange` could hold all the fields directly.
+    /// This is for practice, and to show how a fixture can hold another fixture.
     struct Arrange<'a> {
         mock_server: MockServer,
         email_client: EmailClient,
@@ -149,7 +155,7 @@ mod tests {
     }
 
     /// `EmailFields` doesn't have to be initialized only `once`.
-    /// It can be different for different UTs.
+    /// It can be different for different tests.
     /// We are using `once` here for educational purposes and to keep it
     /// as an example of how we could use it.
     /// Using `once` requires using a reference to the fixture value.
@@ -173,7 +179,12 @@ mod tests {
         let mock_server = MockServer::start().await;
         let base_url = mock_server.uri();
         let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client = EmailClient::new(base_url, sender, Secret::new(Faker.fake()));
+        let email_client = EmailClient::new(
+            base_url,
+            sender,
+            Secret::new(Faker.fake()),
+            std::time::Duration::from_millis(200),
+        );
 
         Arrange {
             mock_server,
